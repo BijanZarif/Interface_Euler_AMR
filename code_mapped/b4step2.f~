@@ -1,0 +1,403 @@
+c     ============================================
+      subroutine b4step2(mbc,mx,my,meqn,q,
+     &            xlower,ylower,dx,dy,t,dt,maux,aux)
+c     ============================================
+c
+c     # called from claw2 before each call to step2.
+c     # use to set time-dependent aux arrays or perform other tasks
+c     # which must be done every time step.
+
+c
+c     # dummy routine 
+c
+c     
+!       for aux averaged time dependant EOS parameters in aux arrays
+!       USE auxmodule
+      
+      implicit double precision (a-h,o-z)
+      dimension q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+      dimension aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      
+      common /param2/ dt2, dx2
+      
+      common /param/ gammagas, gammaplas, gammawat
+      common /param/ pinfgas,pinfplas,pinfwat
+      common /param/ rhog,rhop,rhow
+      
+      dt2 = 1.d0*dt
+      dx2 = 1.d0*dx
+c
+!       Write q variable to aux array
+      do ii=1-mbc,mx+mbc
+	do jj=1-mbc,my+mbc
+	  aux(4,ii,jj) = q(1,ii,jj)
+	  aux(5,ii,jj) = q(2,ii,jj)
+	  aux(6,ii,jj) = q(3,ii,jj)
+	  aux(7,ii,jj) = q(4,ii,jj)
+	end do
+      end do 
+      
+!       Find indexes of interface cells
+!       do ii=1,mx
+! 	do jj=1,my
+! 	  if (aux(1,ii,jj) .ne. aux(1,ii+1,jj)) then
+!             if (aux(1,ii,jj+1) .eq. aux(1,ii+1,jj)) then
+! 		ii0 = ii
+! 		jj0 = jj
+! !  		print*, ii0,jj0, 
+! 	    end if 
+! 	  end if
+! 	end do
+!       end do 
+      
+!       ! Calculate ustar_array for upcoming time step
+!       do i=1-mbc,mx+mbc
+!         do j=1-mbc,my+mbc
+!           gammal = aux(1,i-1,j)
+! 	  gammar = aux(1,i,j)
+! 	  gamma1l = gammal - 1.0
+! 	  gamma1r = gammar - 1.0
+! 	  pinfl = aux(2,i-1,j)
+! 	  pinfr = aux(2,i,j)
+! 	  ! Densities
+! 	  rho_l = q(1,i-1,j)
+! 	  rho_r = q(1,i,j)
+! 	  ! Velocities
+! 	  ul = q(2,i-1,j)/rho_l
+! 	  ur = q(2,i,j)/rho_r
+! 	  vl = q(3,i-1,j)/rho_l
+! 	  vr = q(3,i,j)/rho_r
+! 	  ! Kinetic Energy
+! 	  ek_l = 0.5*rho_l*(ul**2 + vl**2)
+! 	  ek_r = 0.5*rho_r*(ur**2 + vr**2)
+! 	  ! Pressures (Use Tait EOS on water and/or plastic, SGEOS on air or SGEOS on both)
+! 	  pl = gamma1l*(q(4,i-1,j) - ek_l) - pinfl*gammal
+! 	  pr = gamma1r*(q(4,i,j) - ek_r) - pinfr*gammar
+! 	  ! Compute left and right speeds
+! 	  cl = dsqrt(gammal*(pl + pinfl)/rho_l)
+! 	  cr = dsqrt(gammar*(pr + pinfr)/rho_r)
+! 	  ! Compute the speed of left and right HLLC wave
+! 	  Sl = min(ul - cl,ur - cr) ! u(i) - a(i)
+! 	  Sr = max(ul + cl,ur + cr) ! u(i) + a(i),
+! 	  
+! 	  ! Compute HLLC middle speed state (see research notebook)
+! 	  Sm = pr - pl + rho_r*ur*(ur - Sr) - rho_l*ul*(ul - Sl) 
+! 	  Sm = Sm/(rho_r*(ur - Sr) - rho_l*(ul - Sl))
+! 	  ustar_array(i,j) = Sm
+! 	 end do
+!        end do
+!        
+!        !Force CD in hydrophone to be the same as water for better stability
+!        ! Find average CD speed for water and hydrophone in contact with air
+!        Sm_water = 0.0
+!        icount = 0
+!        do i=1-mbc,mx+mbc
+!         do j=1-mbc,my+mbc
+! 	  if ((aux(1,i,j) .ne. gammagas) .and. 
+!      &        (aux(1,i+1,j) .eq. gammagas)) then
+! 	    Sm_water = Sm_water + ustar_array(i,j)
+! 	    icount = icount + 1
+! 	  end if
+!      	end do
+!       end do
+!       Sm_water = Sm_water/float(icount)
+!       ! Put this new found CD speed into thw hole hydrophone 
+!   20  do i=1-mbc,mx+mbc
+!         do j=1-mbc,my+mbc
+! 	  if ((aux(1,i,j) .ne. gammagas) .and. 
+!      &        (aux(1,i+1,j) .eq. gammagas)) then
+! 	    ustar_array(i,j) = Sm_water
+! 	  end if
+! 	end do
+!       end do
+!        
+! 	! Calculate capacity function, and saved it in aux(10,i,j)
+! 	do i=1-mbc,mx+mbc
+! 	  do j=1-mbc,my+mbc
+! 	   ! makes sure to get capacity function from water cells 
+! 	   ! and one layer of air cells surrouding them 
+! 	   if ((aux(1,i,j) .ne. gammagas) .or. 
+!      &	       (aux(1,i-1,j) .ne. gammagas) .or.
+!      &	       (aux(1,i+1,j) .ne. gammagas)) then
+! 	       xp_n = grid_old_x(i+1,j) + dt*ustar_array(i+1,j)
+! 	       xm_n = grid_old_x(i,j) + dt*ustar_array(i,j)
+! 	       aux(10,i,j) = (xp_n - xm_n)/dx
+! 	   else
+! 	    ! leava capacity function intact for the rest of the cells
+! 	    aux(10,i,j) = 1.0
+! 	   end if
+!         end do
+!       end do
+!       print*, aux(10,200,20)
+
+      ! GAUGES for pressure (choose point to see pressure as a function of time)
+      ! Choose x value to obtain pressure as a function of time
+      
+!       ! GAUGE 1
+!       xcell = -0.015
+!       ycell = 0.0005
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (11,*) t, p
+!       
+!       ! GAUGE 2 - 0
+! !       xcell = -0.0065
+!       xcell = -0.0035
+!       ycell = 0.0005
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (12,*) t, p
+!       
+!       ! GAUGE 2-1
+!       xcell = -0.0035
+!       ycell = 0.0007
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (16,*) t, p
+!       
+!       ! GAUGE 2-2
+!       xcell = -0.0035
+!       ycell = 0.0010
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (17,*) t, p
+!       
+!       ! GAUGE 2-3
+!       xcell = -0.0035
+!       ycell = 0.0013
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (18,*) t, p
+!       
+!       ! GAUGE 2-4
+!       xcell = -0.0035
+!       ycell = 0.0015
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (19,*) t, p
+!       
+!        ! GAUGE 2alt - 0
+! !       xcell = -0.0065
+!       xcell = -0.00275
+!       ycell = 0.0005
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (120,*) t, p
+!       
+!       ! GAUGE 2alt-1
+!       xcell = -0.00275
+!       ycell = 0.0007
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (160,*) t, p
+!       
+!       ! GAUGE 2alt-2
+!       xcell = -0.00275
+!       ycell = 0.0010
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (170,*) t, p
+!       
+!       ! GAUGE 2alt-3
+!       xcell = -0.00275
+!       ycell = 0.0013
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (180,*) t, p
+!       
+!       ! GAUGE 2alt-4
+!       xcell = -0.00275
+!       ycell = 0.0015
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!       ! Write Gauge data to file
+!       write (190,*) t, p
+! 
+!       ! GAUGE 3
+!       xcell = 0.0065
+!       ycell = 0.0005
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (13,*) t, p
+! 
+!       ! GAUGE 4
+!       xcell = 0.0075
+!       ycell = 0.0004
+!       i = floor((xcell - xlower)/dx + 0.5)
+!       j = floor((ycell - ylower)/dy + 0.5)
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (14,*) t, p
+      
+!       ! GAUGE INS (for instability at upper left corner)
+!       i = ii0
+!       j = jj0 + 1
+! 
+!       ! Calculate pressure at point xcell
+!       gamma = aux(1,i,j)
+!       gamma1 = aux(1,i,j) - 1.0
+!       pinf = aux(2,i,j)
+!       rho = q(1,i,j)           ! density
+!       momx = q(2,i,j)           ! momentum
+!       momy = q(3,i,j)
+!       ene = q(4,i,j)           ! energy
+!       p = gamma1*(ene - 0.5*(momx*momx + momy*momy)/rho)
+!       p = p - gamma*pinf 
+!      
+!       ! Write Gauge data to file
+!       write (15,*) t, p
+      
+c
+      return
+      end
+
