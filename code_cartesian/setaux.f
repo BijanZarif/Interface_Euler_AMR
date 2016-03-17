@@ -1,0 +1,65 @@
+c     ============================================
+      subroutine setaux(mbc,mx,my,xlower,ylower,dx,dy,
+     &                  maux,aux)
+c     ============================================
+c
+c     # set auxiliary arrays to save Tammann EOS parameters, mapped grid normals,
+c     # capacity function and location of corners.
+
+      implicit double precision (a-h,o-z)
+      dimension aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      
+      ! Arrays to temporarily store computational and physical corners of grid cells
+      dimension xccorn(4),yccorn(4),xpcorn(4),ypcorn(4)
+      double precision norm
+      
+      common /param/ gammagas, gammaplas, gammawat
+      common /param/ pinfgas,pinfplas,pinfwat
+      common /param/ omegas,omeplas,omewat
+      common /param/ rhog,rhop,rhow
+      
+      common /mappedparam/rsqr,rout,rinn
+
+c     #   aux(1,i,j) = gamma in SGEOS ot Tamman EOS p = rho*e*(gamma - 1) - gamma*P_inf
+c     #   aux(2,i,j) = P_inf in SGEOS ot Tamman EOS p = rho*e*(gamma - 1) - gamma*P_inf
+c     #   aux(3,i,j) = Extra free parameter omega that can be used for improved EOS
+                       !e.g. Polystyrene EOS based on Van der Waals approximation in Spender and Gilmore paper
+      
+c     #   These are defined in b4step.f
+c     #   aux(4,i,j) saves q(1,i,j) into array for transverse solverse, (see b4step)
+c     #   aux(5,i,j) saves q(2,i,j) into array for transverse solverse, (see b4step)
+c     #   aux(6,i,j) saves q(3,i,j) into array for transverse solverse, (see b4step)
+c     #   aux(7,i,j) saves q(4,i,j) into array for transverse solverse, (see b4step)
+  
+      ! Calculate square radius where the interface should be
+      rad = rout 
+      radin = rinn
+      
+      ! Loop over all cells
+      do j=1-mbc,my + mbc 
+		ycell = ylower + (j-0.5d0)*dy
+		do i=1-mbc,mx + mbc 
+	  		xcell = xlower + (i-0.5d0)*dx
+            !============================================
+	    	! CREATE INTERFACE USING DIFFERENT PARAMETERS FOR SGEOS (defined in setrun.py)
+            if ((abs(xcell+0.0).le.rad) .and.(ycell.le.rad)) then
+                aux(1,i,j) = gammawat
+                aux(2,i,j) = pinfwat
+                aux(3,i,j) = omewat
+			! Skip plastic interface as in paper, it can be included if required.
+   		    !else if ((xcell > radin).and.(ycell.le.radin)) then
+            !      aux(1,i,j) = gammaplas
+            !      aux(2,i,j) = pinfplas
+            !      aux(3,i,j) = omeplas
+            else 
+                aux(1,i,j) = gammagas
+                aux(2,i,j) = pinfgas
+                aux(3,i,j) = omegas
+            end if
+		end do
+	  end do
+      
+      return
+      end
+
+
