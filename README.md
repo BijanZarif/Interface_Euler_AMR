@@ -50,7 +50,7 @@ The code will produce two new folders: _output and _plots. The first one contain
 * **convergence_tests:** contains convergence tests by comparing the output data at given gauges for many different simulations using different levels of AMR refinement. The internal folders: default-limiter and new-limiter, contain the convergence tests before and after applying the limiters developed in the paper. Each of the folders contain subfolders with the gauge output data for several simulations at different levels of AMR refinement. Both folders also contain a python script to produce the convergence test plots from the paper. 
 
 ### Changing the output
-Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py.
+Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py. These files can be found in the cartesian and in the mapped grid code.
 
 **setrun.py**
 
