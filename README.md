@@ -120,28 +120,28 @@ Although changing the output might require getting more involved with the code, 
     plotaxes.scaled = True      # so aspect ratio is 1   
  ``` 
  
- * Change colormap and range of the figure
- ```
- plotitem.pcolor_cmin = 90000
+* Change colormap and range of the figure
+```
+plotitem.pcolor_cmin = 90000
     plotitem.pcolor_cmax = 230000
     #plotitem.pcolor_cmap = colormaps.white_blue
     white_green_cmap = colormaps.make_colormap({0.:'w', 0.35: '#AAFFEF', 0.7: '#62B4E7', 1.:'#4584F0'})
- ```
+```
  
- * Change AMR patches and grids shown in figure
- ```
+* Change AMR patches and grids shown in figure
+```
     # Each position of the array corresponds to an AMR refinement level.
     plotitem.amr_patchedges_show = [0,0,0,1] 
     plotitem.amr_celledges_show = [1,1,1,0] 
- ```
+```
  
- * Change contours shown on top of the pcolor plot
- ```
+* Change contours shown on top of the pcolor plot
+```
     plotitem.contour_levels = np.linspace(90000,230000,30)
     ...
     # Show contours only for highest level 
     plotitem.amr_contour_show = [0, 0, 0, 1]
- ```
+```
  
 * Change plotting output:
 ```
