@@ -101,8 +101,8 @@ Although changing the output might require getting more involved with the code, 
     amrdata.refinement_ratios_t = [2, 2, 2]
  ```
  
- * Force AMR refinement regions
- ```
+* Force AMR refinement regions
+```
     # to specify regions of refinement append lines of the form
     # regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
     regions.append([4,4,0,1e9,-0.0155,0.0155, 0.0, 0.0155])
