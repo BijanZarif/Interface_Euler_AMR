@@ -50,7 +50,7 @@ The code will produce two new folders: _output and _plots. The first one contain
 * **convergence_tests:** contains convergence tests by comparing the output data at given gauges for many different simulations using different levels of AMR refinement. The internal folders: default-limiter and new-limiter, contain the convergence tests before and after applying the limiters developed in the paper. Each of the folders contain subfolders with the gauge output data for several simulations at different levels of AMR refinement. Both folders also contain a python script to produce the convergence test plots from the paper. 
 
 ### Changing the output
-Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py
+Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py.
 
 **setrun.py**
 
@@ -77,7 +77,7 @@ Although changing the output might require getting more involved with the code, 
     clawdata.tfinal = 0.0002        # final time in seconds
 ```
 
-* Add or remove output gauges
+* Add or remove output gauges at position x, y.
 ```
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
     gauges.append([0, -0.01, 0, 0., 1e9])
@@ -107,10 +107,11 @@ Although changing the output might require getting more involved with the code, 
     # regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
     regions.append([4,4,0,1e9,-0.0155,0.0155, 0.0, 0.0155])
 ```
+
+
 **setplot.py**
 
 * Change main properties of figure 4 (the one showing in the paper):
-
 ```
     plotaxes = plotfigure.new_plotaxes('Pressure')
     plotaxes.xlimits = [-0.04,0.04] 
@@ -118,8 +119,8 @@ Although changing the output might require getting more involved with the code, 
     plotaxes.title = 'Pressure'
     plotaxes.scaled = True      # so aspect ratio is 1   
  ``` 
- * Change colormap and range of the figure
  
+ * Change colormap and range of the figure
  ```
  plotitem.pcolor_cmin = 90000
     plotitem.pcolor_cmax = 230000
@@ -143,7 +144,6 @@ Although changing the output might require getting more involved with the code, 
  ```
  
 * Change plotting output:
-
 ```
     plotdata.printfigs = True                      # print figures
     plotdata.print_format = 'png'                  # file format
