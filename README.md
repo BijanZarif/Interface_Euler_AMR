@@ -42,13 +42,12 @@ Go to the folder: *code_cartesian* or *code_mapped* and run in a terminal:
 The code will produce two new folders: _output and _plots. The first one contains all the output files, while the latter one contains the plots and interactive visualization apps.
 
 ### Folder organization
-* **_gauges:** contains the four output gauges of both codes (no_hydrophone and hydrophone) as well as the plotting routine used to produce the figure in the paper. The output figures are also in this folder.
 
-* **code_hydrophone:** contains the code to run the simulation with an hydrophone. The internal folders: _gauges, _initfiles and _plots_hydrophone, contain the output gauge data for this case, the initial condition data for the incoming shock wave and the plots produced included in the paper.
+* **code_cartesian:** contains the code to run the 2D axisymmetric simulation of Euler equations with AMR on a Cartesian grid with a rectangular interface between air and water. The internal folders: _initfiles, _plots_paper and rp, contain the initial condition data for the incoming shock wave, the plots produced included in the paper, and the code for the corresponding Riemann solvers, respectively.
 
-* **code_no_hydrophone:**  contains the code to run the simulation without an hydrophone. The internal folders: _gauges, _initfiles and _plots_original, contain the output gauge data for this case, the initial condition data for the incoming shock wave and the plots produced included in the paper.
+* **code_mapped:**  contains the code to run the 2D axisymmetric simulation of Euler equations with AMR on a mapped grid with a circular interface between air and water. The mapped grid can be modified by the user to implement different mappings. The mapping included in mapc2p.py and mapc2p.f90 not only allows a circular inclusion but also a ring inclusion. The internal folders: _initfiles, _plots_paper and rp, contain the initial condition data for the incoming shock wave, the plots produced included in the paper, and the code for the Riemann solvers in the mapped grid, respectively.
 
-* **invitro_data:** contains some of the experimental data, along a report on the experimental statistical analysis using SPSS software package. 
+* **convergence_tests:** contains convergence tests by comparing the output data at given gauges for many different simulations using different levels of AMR refinement. The internal folders: not-limited and limited, contain the convergence tests before and after applying the limiters developed in the paper. Each of the folders contain subfolders with the gauge output data for several simulations at different levels of AMR refinement. Both folders also contain a python script to produce the convergence test plots from the paper. 
 
 ### Changing the output
 Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py
