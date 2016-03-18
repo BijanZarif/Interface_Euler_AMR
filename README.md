@@ -47,55 +47,106 @@ The code will produce two new folders: _output and _plots. The first one contain
 
 * **code_mapped:**  contains the code to run the 2D axisymmetric simulation of Euler equations with AMR on a mapped grid with a circular interface between air and water. The mapped grid can be modified by the user to implement different mappings. The mapping included in mapc2p.py and mapc2p.f90 not only allows a circular inclusion but also a ring inclusion. The internal folders: _initfiles, _plots_paper and rp, contain the initial condition data for the incoming shock wave, the plots produced included in the paper, and the code for the Riemann solvers in the mapped grid, respectively.
 
-* **convergence_tests:** contains convergence tests by comparing the output data at given gauges for many different simulations using different levels of AMR refinement. The internal folders: not-limited and limited, contain the convergence tests before and after applying the limiters developed in the paper. Each of the folders contain subfolders with the gauge output data for several simulations at different levels of AMR refinement. Both folders also contain a python script to produce the convergence test plots from the paper. 
+* **convergence_tests:** contains convergence tests by comparing the output data at given gauges for many different simulations using different levels of AMR refinement. The internal folders: default-limiter and new-limiter, contain the convergence tests before and after applying the limiters developed in the paper. Each of the folders contain subfolders with the gauge output data for several simulations at different levels of AMR refinement. Both folders also contain a python script to produce the convergence test plots from the paper. 
 
 ### Changing the output
 Although changing the output might require getting more involved with the code, there are some simple tweaks that will allow the user to see different output. The main code files to edit are setrun.py and setplot.py
 
 **setrun.py**
 
-* Change domain boundaries:
+* Change computational domain boundaries:
 
 ```
-    clawdata.lower[0] = -0.03                 # xlower
-    clawdata.upper[0] = 0.03                  # xupper
-    clawdata.lower[1] = 0.000000e+00          # ylower
-    clawdata.upper[1] = 0.020000e+00          # yupper
+    clawdata.lower[0] = -0.05          # xlower
+    clawdata.upper[0] = 0.05           # xupper
+    clawdata.lower[1] = 0.000000e+     # ylower
+    clawdata.upper[1] = 0.05000e+00    # yupper
 ```
 
-* Change grid size (from 600x60 to new values):
+* Change initial grid size (from 40x20 to new values):
 
 ```
-    clawdata.num_cells[0] = 600
-    clawdata.num_cells[1] = 60
+    clawdata.num_cells[0] = 40
+    clawdata.num_cells[1] = 20
 ```
 
 * Change output times:
 
 ```
-    clawdata.num_output_times = 500 # number of output frames
-    clawdata.tfinal = 0.0002 # final time in seconds
+    clawdata.num_output_times = 150 # number of output frames
+    clawdata.tfinal = 0.0002        # final time in seconds
 ```
 
+* Add or remove output gauges
+```
+    # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
+    gauges.append([0, -0.01, 0, 0., 1e9])
+    gauges.append([1, -0.01, 0.005, 0., 1e9])
+    gauges.append([2, -0.01, 0.01, 0., 1e9])
+    gauges.append([3, 0.0, 0, 0., 1e9])
+    gauges.append([4, 0.0, 0.005, 0., 1e9])
+    gauges.append([5, 0.0, 0.01, 0., 1e9])
+    gauges.append([6, 0.01, 0, 0., 1e9])
+    gauges.append([7, 0.01, 0.005, 0., 1e9])
+    gauges.append([8, 0.01, 0.01, 0., 1e9])
+```
+
+* Change AMR refinement level and refinement ratios
+```
+    amrdata.amr_levels_max = 4
+    # List of refinement ratios at each level (length at least amr_level_max-1)
+    # Note changing refinement ratio might affect stability at interface
+    amrdata.refinement_ratios_x = [2, 2, 2]
+    amrdata.refinement_ratios_y = [2, 2, 2]
+    amrdata.refinement_ratios_t = [2, 2, 2]
+ ```
+ 
+ * Force AMR refinement regions
+ ```
+    # to specify regions of refinement append lines of the form
+    # regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
+    regions.append([4,4,0,1e9,-0.0155,0.0155, 0.0, 0.0155])
+```
 **setplot.py**
 
-* Change main properties of figure 7 (the one showing in the paper):
+* Change main properties of figure 4 (the one showing in the paper):
 
 ```
-    # Pressure contour(2D) and pressure slice(1D) in one figure
-    plotfigure = plotdata.new_plotfigure(name='Contour & Slice', figno=7)
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes() 
-    plotaxes.xlimits = [-3,3] 
-    plotaxes.ylimits = [-20,30]
-    plotaxes.title = 'Pressure'    
-    plotaxes.afteraxes = MirrorPressurecontour_N_Pressureslice    
+    plotaxes = plotfigure.new_plotaxes('Pressure')
+    plotaxes.xlimits = [-0.04,0.04] 
+    plotaxes.ylimits = [0.001,0.035]
+    plotaxes.title = 'Pressure'
+    plotaxes.scaled = True      # so aspect ratio is 1   
  ``` 
+ * Change colormap and range of the figure
+ 
+ ```
+ plotitem.pcolor_cmin = 90000
+    plotitem.pcolor_cmax = 230000
+    #plotitem.pcolor_cmap = colormaps.white_blue
+    white_green_cmap = colormaps.make_colormap({0.:'w', 0.35: '#AAFFEF', 0.7: '#62B4E7', 1.:'#4584F0'})
+ ```
+ 
+ * Change AMR patches and grids shown in figure
+ ```
+    # Each position of the array corresponds to an AMR refinement level.
+    plotitem.amr_patchedges_show = [0,0,0,1] 
+    plotitem.amr_celledges_show = [1,1,1,0] 
+ ```
+ 
+ * Change contours shown on top of the pcolor plot
+ ```
+    plotitem.contour_levels = np.linspace(90000,230000,30)
+    ...
+    # Show contours only for highest level 
+    plotitem.amr_contour_show = [0, 0, 0, 1]
+ ```
  
 * Change plotting output:
 
 ```
-    plotdata.printfigs = True                # print figures
-    plotdata.print_format = 'png'            # file format
-    plotdata.print_framenos =  [75,150,158,174,212,336] #list of frames to print. Use 'all' to print all #
-    plotdata.print_fignos = 'all'            # list of figures to print
+    plotdata.printfigs = True                      # print figures
+    plotdata.print_format = 'png'                  # file format
+    plotdata.print_framenos = [32,57,68,74,88,108] # list of frames to print 'all' for all frames
+    plotdata.print_fignos = [4]                    # list of figures to print 'all' for all figures
+```
